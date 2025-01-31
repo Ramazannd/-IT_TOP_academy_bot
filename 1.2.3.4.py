@@ -59,7 +59,7 @@ def calculate_homework_status(file):
         df = pd.read_excel(file, sheet_name=0)
         df = normalize_columns(df)
 
-        # Наличие нужных столбцов
+        # Наличие столбцов
         if 'ФИО преподавателя' not in df.columns or 'Проверено' not in df.columns:
             return f"Ошибка: В файле отсутствуют нужные столбцы. Доступные столбцы: {df.columns.tolist()}"
 
