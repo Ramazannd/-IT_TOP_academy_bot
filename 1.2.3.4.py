@@ -3,11 +3,11 @@ import pandas as pd
 import re
 from io import BytesIO
 
-# Ваш токен для бота
+#Токен 
 TOKEN = '7785888241:AAGBdDryyw1MiQFlfwwChByROxmWZP-4jm8'
 bot = telebot.TeleBot(TOKEN)
 
-# Функция для нормализации столбцов
+#столбцы
 def normalize_columns(df):
     column_mapping = {
         'ФИО преподавателя': 'ФИО преподавателя',
@@ -19,7 +19,7 @@ def normalize_columns(df):
         'Тема урока': 'Тема урока'
     }
 
-    # Переименовываем столбцы по маппингу
+    # Переименовываем столбцы
     for col in df.columns:
         for key, value in column_mapping.items():
             if key in col:
@@ -33,13 +33,13 @@ def check_lesson_topic(file):
         df = pd.read_excel(file, sheet_name=0)
         df = normalize_columns(df)
 
-        # Ищем столбцы, содержащие "Тема" или "Тема урока"
+        # Ищем столбцы, содержащие "Тема урока"
         lesson_topic_columns = [col for col in df.columns if 'Тема' in col]
 
         if not lesson_topic_columns:
             return "Ошибка: В файле отсутствует столбец, содержащий 'Тема' или 'Тема урока'."
 
-        # Регулярное выражение для проверки формата "Урок №. Тема:"
+        #"Урок №. Тема:"
         topic_pattern = r"^Урок \d+\. .+"
 
         # Проверяем корректность тем уроков
@@ -59,7 +59,7 @@ def calculate_homework_status(file):
         df = pd.read_excel(file, sheet_name=0)
         df = normalize_columns(df)
 
-        # Проверяем наличие нужных столбцов
+        # Наличие нужных столбцов
         if 'ФИО преподавателя' not in df.columns or 'Проверено' not in df.columns:
             return f"Ошибка: В файле отсутствуют нужные столбцы. Доступные столбцы: {df.columns.tolist()}"
 
@@ -98,7 +98,7 @@ def calculate_homework_given(file):
     except Exception as e:
         return f"Ошибка при обработке файла: {e}"
 
-# Функция для проверки посещаемости преподавателей
+# Функция для проверки посещаемости у преподавателей
 def check_attendance(file):
     try:
         df = pd.read_excel(file, sheet_name=0)
@@ -120,12 +120,11 @@ def check_attendance(file):
     except Exception as e:
         return f"Ошибка при обработке файла: {e}"
 
-# Обработчик команды /start
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, "Привет! Отправь мне Excel файл с данными для анализа.")
 
-# Обработчик получения файлов
+# Получения файлов
 @bot.message_handler(content_types=['document'])
 def handle_document(message):
     try:
@@ -133,26 +132,26 @@ def handle_document(message):
         file_info = bot.get_file(file_id)
         file = bot.download_file(file_info.file_path)
 
-        # Проверяем статус домашних заданий (проверено)
+        # Статус домашних заданий
         result_check = calculate_homework_status(BytesIO(file))
         send_result(message, result_check, "Результаты проверки домашних заданий")
 
-        # Проверяем статус домашних заданий (выдано)
+        # Статус выданных домашних заданий 
         result_given = calculate_homework_given(BytesIO(file))
         send_result(message, result_given, "Результаты выданного домашнего задания")
 
-        # Проверяем правильность темы уроков
+        # Правильность темы уроков
         result_topics = check_lesson_topic(BytesIO(file))
         send_result(message, result_topics, "Результаты проверки тем уроков")
 
-        # Проверяем посещаемость
+        # Проверка посещаемости
         result_attendance = check_attendance(BytesIO(file))
         send_result(message, result_attendance, "Результаты проверки посещаемости")
 
     except Exception as e:
         bot.send_message(message.chat.id, f"Произошла ошибка: {e}")
 
-# Функция отправки результата
+# Отправка результата
 def send_result(message, result, caption):
     if isinstance(result, str):
         bot.send_message(message.chat.id, result)
@@ -162,6 +161,5 @@ def send_result(message, result, caption):
             output.seek(0)
             bot.send_document(message.chat.id, output, caption=caption)
 
-# Запуск бота
 if __name__ == '__main__':
     bot.polling(none_stop=True)
